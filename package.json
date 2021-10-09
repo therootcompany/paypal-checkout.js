@@ -1,0 +1,28 @@
+{
+  "name": "@root/paypal-checkout",
+  "version": "0.1.0",
+  "description": "A more sensible, human-generated wrapper for the PayPal Checkout REST API",
+  "main": "paypal-checkout.js",
+  "files": ["lib"],
+  "scripts": {
+    "postinstall": "node utils/make-categories.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therootcompany/paypal-checkout.js.git"
+  },
+  "keywords": ["paypal", "checkout", "sdk", "rest", "api", "subscriptions"],
+  "author": "AJ ONeal <coolaj86@gmail.com> (https://coolaj86.com/)",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/therootcompany/paypal-checkout.js/issues"
+  },
+  "homepage": "https://github.com/therootcompany/paypal-checkout.js#readme",
+  "devDependencies": {
+    "dotenv": "^10.0.0"
+  },
+  "dependencies": {
+    "@root/request": "^1.7.0"
+  }
+}
