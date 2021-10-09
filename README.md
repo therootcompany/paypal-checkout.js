@@ -20,8 +20,9 @@ PPC.init({
   client_secret: "****",
 });
 
-PPC.Subscriptions.create({
-})
+PPC.Subscriptions.createRequest({
+  // See https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions
+});
 ```
 
 ![](https://i.imgur.com/brFTseM.png "PayPal Checkout API Flow")

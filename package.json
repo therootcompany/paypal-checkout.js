@@ -5,7 +5,7 @@
   "main": "paypal-checkout.js",
   "files": ["lib"],
   "scripts": {
-    "postinstall": "node utils/make-categories.js",
+    "prepare": "node utils/make-categories.js",
     "test": "node test.js"
   },
   "repository": {
