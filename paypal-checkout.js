@@ -46,7 +46,7 @@ function sanitize(resp) {
 
 function must201or200(resp) {
   if (![200, 201].includes(resp.statusCode)) {
-    let err = new Error("bad response");
+    let err = new Error("[@root/paypal-checkout] bad response");
     err.response = resp;
     throw err;
   }
