@@ -3,17 +3,17 @@
 let request = require("@root/request");
 
 let PayPal = {};
-PayPal.init = function (id, secret) {
+PayPal.init = function (client_id, client_secret) {
   PayPal.__sandboxUrl = "https://api-m.sandbox.paypal.com";
   PayPal.__baseUrl = PayPal.__sandboxUrl;
-  PayPal.__id = id;
-  PayPal.__secret = secret;
+  PayPal.__id = client_id;
+  PayPal.__secret = client_secret;
 };
 PayPal.request = async function _paypalRequest(reqObj) {
   let headers = {};
-  if (reqObj.id) {
+  if (reqObj.request_id) {
     // Optional and if passed, helps identify idempotent requests
-    headers["PayPal-Request-Id"] = reqObj.id;
+    headers["PayPal-Request-Id"] = reqObj.request_id;
   }
   // ex: https://api-m.sandbox.paypal.com/v1/billing/subscriptions
   reqObj.url = `${PayPal.__baseUrl}${reqObj.url}`;
@@ -85,7 +85,7 @@ Product.categories = {
 */
 
 Product.create = async function _createSubscription({
-  id,
+  request_id,
   name,
   description,
   type,
@@ -93,8 +93,8 @@ Product.create = async function _createSubscription({
   image_url,
   home_url,
 }) {
-  if (id) {
-    if (!id.startsWith("PROD-")) {
+  if (request_id) {
+    if (!request_id.startsWith("PROD-")) {
       console.warn(`Warn: product ID should start with "PROD-"`);
     }
   }
@@ -108,7 +108,7 @@ Product.create = async function _createSubscription({
   return await PayPal.request({
     method: "POST",
     url: "/v1/catalogs/products",
-    id: id,
+    request_id: request_id,
     json: {
       // ex: "Video Streaming Service"
       name: name,
@@ -142,7 +142,7 @@ Plan.tenures = {
 
 // See https://developer.paypal.com/docs/api/subscriptions/v1/
 Plan.create = async function _createPlan({
-  id,
+  request_id,
   status = "ACTIVE",
   product_id,
   name,
@@ -152,19 +152,20 @@ Plan.create = async function _createPlan({
   taxes, // optional
   quantity_supported = false,
 }) {
-  let headers = {};
-  if (id) {
-    if (!id.startsWith("PLAN-")) {
+  if (request_id) {
+    if (!request_id.startsWith("PLAN-")) {
       // ex: PLAN-18062020-001
       console.warn(`Warn: plan ID should start with "PLAN-"`);
     }
   }
-  headers["Prefer"] = "return=representation";
   return await PayPal.request({
     method: "POST",
     url: "/v1/billing/plans",
-    id: id,
-    headers: headers,
+    request_id: request_id,
+    // TODO should we make this the default?
+    headers: {
+      Prefer: "return=representation",
+    },
     json: {
       // ex: "PROD-6XB24663H4094933M"
       product_id: product_id,
@@ -219,7 +220,7 @@ Subscription.payee_preferences = {
 };
 
 Subscription.createRequest = async function _createSubscription({
-  id,
+  request_id,
   plan_id,
   start_time,
   quantity,
@@ -230,7 +231,7 @@ Subscription.createRequest = async function _createSubscription({
   return await PayPal.request({
     method: "POST",
     url: "/v1/billing/subscriptions",
-    id: id,
+    request_id: request_id,
     json: {
       // ex: "P-5ML4271244454362WXNWU5NQ"
       plan_id: plan_id,
