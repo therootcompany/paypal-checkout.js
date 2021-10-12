@@ -102,7 +102,7 @@ async function test() {
       */
     },
     application_context: {
-      brand_name: "root",
+      brand_name: "Bliss via The Root Group, LLC",
       locale: "en-US",
       shipping_preference: Subscription.shipping_preferences.NO_SHIPPING,
       user_action: Subscription.actions.SUBSCRIBE_NOW,

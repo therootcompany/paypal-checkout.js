@@ -57,9 +57,20 @@ PayPal.Plan.list();
 PayPal.Plan.details(id);
 PayPal.Plan.update(id, { description });      // event_type: "BILLING.PLAN.UPDATED"
 
-PayPal.Subscription.create({ ... });
+PayPal.Subscription.createRequest({ ... });
 PayPal.Subscription.details(id);
 PayPal.Subscription.cancel(id, { reason });
+```
+
+# Redirects
+
+Subscription Request `return_url` will include the following:
+
+```txt
+https://example.com/redirects/paypal-checkout/return
+  ?subscription_id=XXXXXXXXXXXXXX
+  &ba_token=BA-00000000000000000
+  &token=XXXXXXXXXXXXXXXXX
 ```
 
 # Webhooks
@@ -71,8 +82,6 @@ Webhooks can be set up in the Application section of the Dashboard:
 You'll see a list of applications. Click on one to access the webhooks.
 
 # Notes
-
-![](https://i.imgur.com/brFTseM.png "PayPal Checkout API Flow")
 
 Note: Just about everything in the PayPal SDK that uses `ALL_CAPS` is a
 `constant`/`enum` representing an option you can pick from limited number of
