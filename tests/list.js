@@ -14,7 +14,7 @@ let PayPal = require("../");
 let { Plan, Product, Subscription } = PayPal;
 
 async function test() {
-  let products = await Plan.list();
+  let products = await Product.list();
   console.info();
   console.info("Products:");
   console.info(JSON.stringify(products, null, 2));

@@ -129,7 +129,7 @@ Product.create = async function _createProduct({
 };
 Product.list = async function _listProducts() {
   return await PayPal.request({
-    url: "/v1/catalogs/products",
+    url: "/v1/catalogs/products?page_size=20&total_required=true",
     json: true,
   })
     .then(must201or200)
@@ -210,8 +210,9 @@ Plan.create = async function _createPlan({
 };
 
 Plan.list = async function _listPlans() {
+  // TODO paging
   return await PayPal.request({
-    url: "/v1/billing/plans",
+    url: "/v1/billing/plans?page_size=20&total_required=true",
     json: true,
   })
     .then(must201or200)
