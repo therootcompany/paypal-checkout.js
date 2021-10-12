@@ -11,7 +11,7 @@
   $c.closest('div').nextElementSibling.querySelectorAll('li').forEach(function ($el) {
     categories.push($el.querySelector('code').innerText);
   });
-  console.log(JSON.stringify(categories));
+  console.info(JSON.stringify(categories));
 */
 let categories = [
   "AC_REFRIGERATION_REPAIR",
