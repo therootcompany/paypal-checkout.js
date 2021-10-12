@@ -47,17 +47,21 @@ PPC.Subscriptions.createRequest({
 PayPal.init(client_id, client_secret, 'sandbox|live', defaults);
 PayPal.request({ method, url, headers, json });
 
-PayPal.Product.create({ ... });               // event_type: "CATALOG.PRODUCT.CREATED"
+                                              // Webhook 'event_type':
+
+PayPal.Product.create({ ... });               // CATALOG.PRODUCT.CREATED
 PayPal.Product.list();
 PayPal.Product.details(id);
-PayPal.Product.update(id, { description });   // event_type: "CATALOG.PRODUCT.UPDATED"
+PayPal.Product.update(id, { description });   // CATALOG.PRODUCT.UPDATED
 
-PayPal.Plan.create({ ... });                  // event_type: "BILLING.PLAN.CREATED"
+PayPal.Plan.create({ ... });                  // BILLING.PLAN.CREATED
 PayPal.Plan.list();
 PayPal.Plan.details(id);
-PayPal.Plan.update(id, { description });      // event_type: "BILLING.PLAN.UPDATED"
+PayPal.Plan.update(id, { description });      // BILLING.PLAN.UPDATED
 
-PayPal.Subscription.createRequest({ ... });
+PayPal.Subscription.createRequest({ ... });   // BILLING.SUBSCRIPTION.CREATED
+// subscription.links[rel="approve"].href     // BILLING.SUBSCRIPTION.ACTIVATED
+                                              // PAYMENT.SALE.COMPLETED
 PayPal.Subscription.details(id);
 PayPal.Subscription.cancel(id, { reason });
 ```
