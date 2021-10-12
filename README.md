@@ -5,9 +5,25 @@ with lots of abstraction without much value - this is very little abstraction,
 but specificially designed to be (mostly) idiomatic JavaScript / Node.js. \
 (excuse the `snake_case` - that's how the PayPal REST API is designed).
 
+![](https://i.imgur.com/brFTseM.png "PayPal Checkout API Flow")
+
+<img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-large.png" alt="Check out with PayPal" />
+
+The Good Documentation™ for the PayPal API (a.k.a. PayPal Checkout SDK) is the
+"REST API". See
+
+- <https://developer.paypal.com/docs/api/orders/v2/> (one-time payments)
+- <https://developer.paypal.com/docs/api/subscriptions/v1/> (recurring
+  subscriptions)
+- <https://www.paypal.com/webapps/mpp/logos-buttons> (the buttons)
+
+# Install
+
 ```bash
 npm install --save @root/paypal-checkout
 ```
+
+# Usage
 
 ```js
 "use strict";
@@ -25,14 +41,38 @@ PPC.Subscriptions.createRequest({
 });
 ```
 
+# API
+
+```txt
+PayPal.init(client_id, client_secret, 'sandbox|live', defaults);
+PayPal.request({ method, url, headers, json });
+
+PayPal.Product.create({ ... });               // event_type: "CATALOG.PRODUCT.CREATED"
+PayPal.Product.list();
+PayPal.Product.details(id);
+PayPal.Product.update(id, { description });   // event_type: "CATALOG.PRODUCT.UPDATED"
+
+PayPal.Plan.create({ ... });                  // event_type: "BILLING.PLAN.CREATED"
+PayPal.Plan.list();
+PayPal.Plan.details(id);
+PayPal.Plan.update(id, { description });      // event_type: "BILLING.PLAN.UPDATED"
+
+PayPal.Subscription.create({ ... });
+PayPal.Subscription.details(id);
+PayPal.Subscription.cancel(id, { reason });
+```
+
+# Webhooks
+
+Webhooks can be set up in the Application section of the Dashboard:
+
+- <https://developer.paypal.com/developer/applications>
+
+You'll see a list of applications. Click on one to access the webhooks.
+
+# Notes
+
 ![](https://i.imgur.com/brFTseM.png "PayPal Checkout API Flow")
-
-The Good Documentation™ for the PayPal API (a.k.a. PayPal Checkout SDK) is the
-"REST API". See
-
-- <https://developer.paypal.com/docs/api/orders/v2/> (one-time payments)
-- <https://developer.paypal.com/docs/api/subscriptions/v1/> (recurring
-  subscriptions)
 
 Note: Just about everything in the PayPal SDK that uses `ALL_CAPS` is a
 `constant`/`enum` representing an option you can pick from limited number of

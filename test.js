@@ -141,7 +141,7 @@ async function test() {
   });
   process.stdin.pause();
 
-  let s = await Subscription.get(subscription.id);
+  let s = await Subscription.details(subscription.id);
   console.info("Subscription: (After Approval)");
   console.info(JSON.stringify(s, null, 2));
   console.info();

@@ -1,13 +1,34 @@
 "use strict";
 
+let qs = require("querystring");
+
 let request = require("@root/request");
 
 let PayPal = {};
-PayPal.init = function (client_id, client_secret) {
+PayPal.init = function (client_id, client_secret, env, opts) {
+  if (!opts) {
+    opts = {};
+  }
+  if (!("total_required" in opts)) {
+    opts.total_required = true;
+  }
+  if (!opts.page_size) {
+    opts.page_size = 20;
+  }
+  if (!opts.prefer) {
+    opts.prefer = "return=representation";
+  }
+
   PayPal.__sandboxUrl = "https://api-m.sandbox.paypal.com";
   PayPal.__baseUrl = PayPal.__sandboxUrl;
   PayPal.__id = client_id;
   PayPal.__secret = client_secret;
+  PayPal.__defaultQuery = {
+    page_size: opts.page_size,
+    total_required: opts.total_required,
+    page: 1,
+  };
+  PayPal.__prefer = opts.prefer;
 };
 PayPal.request = async function _paypalRequest(reqObj) {
   let headers = {};
@@ -23,6 +44,30 @@ PayPal.request = async function _paypalRequest(reqObj) {
     pass: PayPal.__secret,
   };
   return await request(reqObj).then(sanitize);
+};
+PayPal._patch = function (obj) {
+  let ops = [];
+
+  Object.keys(obj).forEach(function (k) {
+    let val = obj[k];
+    if ("undefined" === typeof val) {
+      return;
+    }
+
+    let op = "replace";
+    if (null === val) {
+      op = "delete";
+      val = undefined;
+    }
+
+    ops.push({
+      path: `/${k}`,
+      op: op,
+      value: val,
+    });
+  });
+
+  return ops;
 };
 
 function justBody(resp) {
@@ -46,6 +91,14 @@ function sanitize(resp) {
 
 function must201or200(resp) {
   if (![200, 201].includes(resp.statusCode)) {
+    let err = new Error("[@root/paypal-checkout] bad response");
+    err.response = resp;
+    throw err;
+  }
+  return resp;
+}
+function must204or200(resp) {
+  if (![200, 204].includes(resp.statusCode)) {
     let err = new Error("[@root/paypal-checkout] bad response");
     err.response = resp;
     throw err;
@@ -127,13 +180,47 @@ Product.create = async function _createProduct({
     .then(must201or200)
     .then(justBody);
 };
-Product.list = async function _listProducts() {
+
+Product.list = async function _listProducts(query = {}) {
+  query = Object.assign({}, PayPal.__defaultQuery, query);
+  let search = qs.stringify(query);
   return await PayPal.request({
-    url: "/v1/catalogs/products?page_size=20&total_required=true",
+    url: `/v1/catalogs/products?${search}`,
     json: true,
   })
     .then(must201or200)
     .then(justBody);
+};
+
+Product.details = async function _showProductDetails(id) {
+  return await PayPal.request({
+    url: `/v1/catalogs/products/${id}`,
+    json: true,
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
+/**
+ * Update product info
+ * @param id
+ * @param {{
+ *   description: string,
+ *   category: string,
+ *   image_url: string,
+ *   home_url: string,
+ * }}
+ */
+Product.update = async function _updateProduct(
+  id,
+  { description, category, image_url, home_url }
+) {
+  let body = PayPal._patch({ description, category, image_url, home_url });
+  return await PayPal.request({
+    method: "PATCH",
+    url: `/v1/catalogs/products/${id}`,
+    json: body,
+  }).then(must204or200);
 };
 
 let Plan = {};
@@ -209,14 +296,48 @@ Plan.create = async function _createPlan({
     .then(justBody);
 };
 
-Plan.list = async function _listPlans() {
-  // TODO paging
+Plan.list = async function _listPlans(query = {}) {
+  query = Object.assign({}, PayPal.__defaultQuery, query);
+  let search = qs.stringify(query);
   return await PayPal.request({
-    url: "/v1/billing/plans?page_size=20&total_required=true",
+    url: `/v1/billing/plans?${search}`,
     json: true,
   })
     .then(must201or200)
     .then(justBody);
+};
+
+Plan.details = async function _showPlanDetails(id) {
+  return await PayPal.request({
+    url: `/v1/billing/plans/${id}`,
+    json: true,
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
+/**
+ * Update plan info
+ * @param id
+ * @param {{
+ *   description: string,
+ *   payment_preferences.auto_bill_outstandin: boolean,
+ *   taxes.percentage: string,
+ *   payment_preferences.payment_failure_threshold: number,
+ *   payment_preferences.setup_fee: string,
+ *   payment_preferences.setup_fee_failure_action: string,
+ * }}
+ */
+Plan.update = async function _updatePlan(
+  id,
+  // TODO handle nested keys (ex: 'taxes.percentage')
+  { description /*, payment_preferences, taxes*/ }
+) {
+  return await PayPal.request({
+    method: "PATCH",
+    url: `/v1/billing/plans/${id}`,
+    json: PayPal._patch({ description }),
+  }).then(must204or200);
 };
 
 let Subscription = {};
@@ -298,10 +419,27 @@ Subscription.createRequest = async function _createSubscription({
     .then(justBody);
 };
 
-Subscription.get = async function _getSubscription(id) {
+Subscription.details = async function _getSubscription(id) {
   return await PayPal.request({
     url: `/v1/billing/subscriptions/${id}`,
     json: true,
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
+/**
+ * Cancel a subscription (prevent future auto billing)
+ * @param id
+ * @param {{
+ *   reason: string
+ * }}
+ */
+Subscription.cancel = async function _showProductDetails(id, { reason }) {
+  return await PayPal.request({
+    method: "POST",
+    url: `/v1/catalogs/products/${id}/cancel`,
+    json: { reason },
   })
     .then(must201or200)
     .then(justBody);
