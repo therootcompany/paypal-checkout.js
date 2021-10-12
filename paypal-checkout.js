@@ -84,7 +84,7 @@ Product.categories = {
 };
 */
 
-Product.create = async function _createSubscription({
+Product.create = async function _createProduct({
   request_id,
   name,
   description,
@@ -123,6 +123,14 @@ Product.create = async function _createSubscription({
       // ex: "https://example.com/home"
       home_url: home_url,
     },
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+Product.list = async function _listProducts() {
+  return await PayPal.request({
+    url: "/v1/catalogs/products",
+    json: true,
   })
     .then(must201or200)
     .then(justBody);
@@ -196,6 +204,15 @@ Plan.create = async function _createPlan({
       taxes: taxes,
       quantity_supported: quantity_supported,
     },
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
+Plan.list = async function _listPlans() {
+  return await PayPal.request({
+    url: "/v1/billing/plans",
+    json: true,
   })
     .then(must201or200)
     .then(justBody);
