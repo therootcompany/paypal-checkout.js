@@ -1,4 +1,4 @@
-# @root/paypal-checkout
+# [@root/paypal-checkout](https://git.rootprojects.org/root/paypal-checkout.js)
 
 In contrast to the official PayPal Checkout SDK - which is auto-generated code
 with lots of abstraction without much value - this is very little abstraction,
