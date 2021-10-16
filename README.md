@@ -85,6 +85,23 @@ Webhooks can be set up in the Application section of the Dashboard:
 
 You'll see a list of applications. Click on one to access the webhooks.
 
+**Security**: You must put a `secret` or `token` or your webhook URLs - PayPal
+provides no measure of authentication (and otherwise an attacker could just send
+random crap to your webhooks making it look like they've paid for all sorts of
+things).
+
+# Security
+
+#### User email addresses
+
+Emails addresses available through the PayPal Checkout API guaranteed to have
+been verified by PayPal.
+
+See:
+
+- [Is `resource.subscriber.email_address` verified by PayPal?](https://twitter.com/paypaldev/status/1448238655743488008)
+- [How do I receive money through PayPal?](https://www.paypal.com/us/smarthelp/article/how-do-i-receive-money-through-paypal-faq1750)
+
 # Notes
 
 Note: Just about everything in the PayPal SDK that uses `ALL_CAPS` is a
