@@ -68,6 +68,11 @@ PayPal.Subscription.cancel(id, { reason });
 
 # Redirects
 
+- `return_url`
+- `cancel_url`
+
+#### `return_url`
+
 Subscription Request `return_url` will include the following:
 
 ```txt
@@ -76,6 +81,14 @@ https://example.com/redirects/paypal-checkout/return
   &ba_token=BA-00000000000000000
   &token=XXXXXXXXXXXXXXXXX
 ```
+
+#### `cancel_url`
+
+The `cancel_url` will have the same query params as the `return_url`.
+
+Also, PayPal presents the raw `cancel_url` and will NOT update the subscription
+status. It's up to you to confirm with the user and change the status to
+`CANCELLED`.
 
 # Webhooks
 
