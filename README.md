@@ -174,7 +174,7 @@ PayPal.init(client_id, client_secret, "sandbox", defaults);
 PayPal.request({ method, url, headers, json });
 ```
 
-## No Dependencies Needed
+### No Dependencies Needed
 
 If you'd like to keep your code super lightweight, you don't even need an SDK -
 you can just use simple HTTP requests:
