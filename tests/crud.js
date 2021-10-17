@@ -11,7 +11,7 @@ if (!process.env.PAYPAL_CLIENT_ID) {
 }
 
 let PayPal = require("../");
-let { Plan, Product, Subscription } = PayPal;
+let { Plan, Product /*, Subscription*/ } = PayPal;
 
 async function test() {
   let products = await Product.list();
@@ -48,7 +48,11 @@ async function test() {
 }
 
 if (require.main === module) {
-  PayPal.init(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET);
+  PayPal.init(
+    process.env.PAYPAL_CLIENT_ID,
+    process.env.PAYPAL_CLIENT_SECRET,
+    "sandbox"
+  );
   test().catch(function (err) {
     console.error("Something bad happened:");
     console.error(JSON.stringify(err, null, 2));

@@ -46,7 +46,11 @@ PPC.Subscriptions.createRequest({
 ```txt
 PayPal.init(client_id, client_secret, 'sandbox|live', defaults);
 PayPal.request({ method, url, headers, json });
+```
 
+### Subscrptions (Recurring Payments)
+
+```txt
                                               // Webhook 'event_type':
 
 PayPal.Product.create({ ... });               // CATALOG.PRODUCT.CREATED
@@ -66,6 +70,21 @@ PayPal.Subscription.details(id);
 PayPal.Subscription.cancel(id, { reason });
 ```
 
+### Orders (One-Time Payments)
+
+```txt
+                                                // Webhook 'event_type':
+
+PayPal.Order.createRequest({ purchase_units }); // CHECKOUT.ORDER.APPROVED
+PayPal.Order.capture(id, { final_capture });    // PAYMENT.CAPTURE.COMPLETED
+```
+
+See also:
+
+- <https://developer.paypal.com/docs/api/orders/v2/#orders_create>
+- <https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request>
+- <https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context>
+
 # Redirects
 
 - `return_url`
@@ -73,22 +92,41 @@ PayPal.Subscription.cancel(id, { reason });
 
 #### `return_url`
 
-Subscription Request `return_url` will include the following:
+**_Order_** and **_Subscription_** requests have a return `return_url` will be
+called with some or all of the following params:
 
 ```txt
+# Order
+https://example.com/redirects/paypal-checkout/return
+  ?token=XXXXXXXXXXXXXXXXX
+  &PayerID=XXXXXXXXXXXXX
+```
+
+- `token` is the **_Order ID_**
+- `PayerID` is... exactly what it seems (no idea how you can access the Payer
+  object though)
+
+```txt
+# Subscrption
 https://example.com/redirects/paypal-checkout/return
   ?subscription_id=XXXXXXXXXXXXXX
   &ba_token=BA-00000000000000000
   &token=XXXXXXXXXXXXXXXXX
 ```
 
+- `subscription_id` refers to both the **_Subscription ID_** and the
+  `billing_agreement_id` of the corresponding **_Payments_**.
+- `ba_token` (deprecated) refers to `/v1/payments/billing-agreements/:ba_token`
+- `token` refers to the **_Order ID_** (perhaps created as part of the setup fee
+  or first billing cycle payment).
+
 #### `cancel_url`
 
 The `cancel_url` will have the same query params as the `return_url`.
 
-Also, PayPal presents the raw `cancel_url` and will NOT update the subscription
-status. It's up to you to confirm with the user and change the status to
-`CANCELLED`.
+Also, PayPal presents the raw `cancel_url` and will NOT update the order or
+subscription status. It's up to you to confirm with the user and change the
+status to `CANCELLED`.
 
 # Webhooks
 
@@ -117,6 +155,10 @@ See:
 
 # Notes
 
+My discussions with Twitter Support (@paypaldev):
+
+- <https://twitter.com/search?q=(from%3Acoolaj86)%20(to%3Apaypaldev)&src=typed_query>
+
 Note: Just about everything in the PayPal SDK that uses `ALL_CAPS` is a
 `constant`/`enum` representing an option you can pick from limited number of
 options.
@@ -124,7 +166,7 @@ options.
 Sandbox accounts (for creating fake purchases) can be managed at:
 <https://developer.paypal.com/developer/accounts>
 
-Note on Auth + Capture:
+## Auth vs Capture
 
 > Authorization and capture enables you to authorize fund availability but delay
 > fund capture. This can be useful for merchants who have a delayed order
@@ -141,9 +183,170 @@ Note on Auth + Capture:
 > - <https://developer.paypal.com/docs/admin/auth-capture/>
 > - <https://developer.paypal.com/docs/api/payments/v2/#authorizations_capture>
 
-Buttons:
+You can auth once and capture multiple times (unless you set `final_capture`).
+
+## PayPal Checkout Buttons
 
 - <https://www.paypal.com/webapps/mpp/logos-buttons> <== THE ONE YOU WANT
   - <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-large.png" alt="Check out with PayPal" />
 - <https://developer.paypal.com/docs/checkout/>
 - <https://www.paypal.com/buttons/>
+
+# Glossary
+
+## Webhook Event: CHECKOUT.ORDER.APPROVED
+
+```json
+{
+  "id": "WH-1V203642KU442722T-3S346483MF8733038",
+  "event_version": "1.0",
+  "create_time": "2021-10-17T05:04:22.404Z",
+  "resource_type": "checkout-order",
+  "resource_version": "2.0",
+  "event_type": "CHECKOUT.ORDER.APPROVED",
+  "summary": "An order has been approved by buyer",
+  "resource": {
+    "create_time": "2021-10-17T05:03:26Z",
+    "purchase_units": [
+      {
+        "reference_id": "{purchase-unit-id}",
+        "amount": {
+          "currency_code": "USD",
+          "value": "10.00"
+        },
+        "payee": {
+          "email_address": "sb-a9xvi8075587@business.example.com",
+          "merchant_id": "4RXRQC77UD53U",
+          "display_data": {
+            "brand_name": "Bliss via The Root Group, LLC"
+          }
+        },
+        "description": "1 year of pure Bliss",
+        "custom_id": "{my-local-db-purchase-id}",
+        "soft_descriptor": "Bliss"
+      }
+    ],
+    "links": [
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4K5112848U951142F",
+        "rel": "self",
+        "method": "GET"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4K5112848U951142F",
+        "rel": "update",
+        "method": "PATCH"
+      },
+      {
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4K5112848U951142F/capture",
+        "rel": "capture",
+        "method": "POST"
+      }
+    ],
+    "id": "4K5112848U951142F",
+    "intent": "CAPTURE",
+    "payer": {
+      "name": {
+        "given_name": "John",
+        "surname": "Doe"
+      },
+      "email_address": "sb-ka5d18075586@personal.example.com",
+      "payer_id": "YTENGYR8PAF9A",
+      "address": {
+        "country_code": "US"
+      }
+    },
+    "status": "APPROVED"
+  },
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1V203642KU442722T-3S346483MF8733038",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-1V203642KU442722T-3S346483MF8733038/resend",
+      "rel": "resend",
+      "method": "POST"
+    }
+  ]
+}
+```
+
+## Webhook Event: PAYMENT.CAPTURE.COMPLETED
+
+```json
+{
+  "id": "WH-3UT90572MR669760L-7LL94124G5389840D",
+  "event_version": "1.0",
+  "create_time": "2021-10-17T05:05:03.389Z",
+  "resource_type": "capture",
+  "resource_version": "2.0",
+  "event_type": "PAYMENT.CAPTURE.COMPLETED",
+  "summary": "Payment completed for $ 10.0 USD",
+  "resource": {
+    "amount": {
+      "value": "10.00",
+      "currency_code": "USD"
+    },
+    "seller_protection": {
+      "dispute_categories": ["ITEM_NOT_RECEIVED", "UNAUTHORIZED_TRANSACTION"],
+      "status": "ELIGIBLE"
+    },
+    "supplementary_data": {
+      "related_ids": {
+        "order_id": "4K5112848U951142F"
+      }
+    },
+    "update_time": "2021-10-17T05:04:29Z",
+    "create_time": "2021-10-17T05:04:29Z",
+    "final_capture": true,
+    "seller_receivable_breakdown": {
+      "paypal_fee": {
+        "value": "0.84",
+        "currency_code": "USD"
+      },
+      "gross_amount": {
+        "value": "10.00",
+        "currency_code": "USD"
+      },
+      "net_amount": {
+        "value": "9.16",
+        "currency_code": "USD"
+      }
+    },
+    "custom_id": "{my-local-db-purchase-id}",
+    "links": [
+      {
+        "method": "GET",
+        "rel": "self",
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/5VK462069F664902F"
+      },
+      {
+        "method": "POST",
+        "rel": "refund",
+        "href": "https://api.sandbox.paypal.com/v2/payments/captures/5VK462069F664902F/refund"
+      },
+      {
+        "method": "GET",
+        "rel": "up",
+        "href": "https://api.sandbox.paypal.com/v2/checkout/orders/4K5112848U951142F"
+      }
+    ],
+    "id": "5VK462069F664902F",
+    "status": "COMPLETED"
+  },
+  "links": [
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3UT90572MR669760L-7LL94124G5389840D",
+      "rel": "self",
+      "method": "GET"
+    },
+    {
+      "href": "https://api.sandbox.paypal.com/v1/notifications/webhooks-events/WH-3UT90572MR669760L-7LL94124G5389840D/resend",
+      "rel": "resend",
+      "method": "POST"
+    }
+  ]
+}
+```

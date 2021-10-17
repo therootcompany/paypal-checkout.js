@@ -114,6 +114,69 @@ function enumify(obj) {
 }
 */
 
+let Order = {};
+Order.intents = {
+  CAPTURE: "CAPTURE",
+  AUTHORIZE: "AUTHORIZE",
+};
+// See
+// https://developer.paypal.com/docs/api/orders/v2/#orders_create
+// https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request
+// https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context
+Order.createRequest = async function (order) {
+  if (!order.intent) {
+    order.intent = Order.intents.CAPTURE;
+  }
+  if (!order.purchase_units?.length) {
+    throw new Error("must have 'purchase_units'");
+  }
+
+  /*
+   {
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "USD",
+            value: "100.00",
+          },
+        },
+      ],
+    }
+  */
+  return await PayPal.request({
+    method: "POST",
+    url: `/v2/checkout/orders`,
+    json: order,
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
+Order.details = async function (id) {
+  return await PayPal.request({
+    url: `/v2/checkout/orders/${id}`,
+    json: true,
+  })
+    .then(must201or200) // 200
+    .then(justBody);
+};
+
+/**
+ * Captures (finalizes) an approved order.
+ * @param {String} id
+ * @param {any} body
+ */
+Order.capture = async function (id, { note_to_payer, final_capture }) {
+  return await PayPal.request({
+    method: "POST",
+    url: `/v2/checkout/orders/${id}/capture`,
+    json: { note_to_payer, final_capture },
+  })
+    .then(must201or200)
+    .then(justBody);
+};
+
 let Product = {};
 
 // SaaS would be type=SERVICE, category=SOFTWARE
@@ -447,6 +510,7 @@ Subscription.cancel = async function _showProductDetails(id, { reason }) {
 
 module.exports.init = PayPal.init;
 module.exports.request = PayPal.request;
+module.exports.Order = Order;
 module.exports.Plan = Plan;
 module.exports.Product = Product;
 module.exports.Subscription = Subscription;
