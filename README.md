@@ -17,38 +17,203 @@ The Good Documentation™ for the PayPal API (a.k.a. PayPal Checkout SDK) is the
   subscriptions)
 - <https://www.paypal.com/webapps/mpp/logos-buttons> (the buttons)
 
+# Table of Contents
+
+- Install
+- QuickStart
+  - Orders (One-Time Purchases)
+  - PayPal Checkout Buttons
+- REST API Overview
+  - Orders & Subscriptions
+  - Redirects
+  - Webhooks
+- Security & Notes
+- Detailed Examples & Glossary
+
 # Install
 
 ```bash
 npm install --save @root/paypal-checkout
 ```
 
-# Usage
+# Quick Start
 
-```js
-"use strict";
+If you just want to create a "Buy Now" or "Checkout with PayPal" type of button,
+here's the gist of what you need to do:
 
-require("dotenv").config({ path: ".env" });
+## Order (One-Time Purchase)
 
-let PPC = require("@root/paypal-checkout");
-PPC.init({
-  client_id: "xxxx",
-  client_secret: "****",
-});
+1. Initialize the API
 
-PPC.Subscriptions.createRequest({
-  // See https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions
-});
-```
+   ```js
+   "use strict";
+
+   require("dotenv").config({ path: ".env" });
+
+   let PPC = require("@root/paypal-checkout");
+
+   PPC.init(
+     process.env.PAYPAL_CLIENT_ID || "xxxx",
+     process.env.PAYPAL_CLIENT_SECRET || "****",
+     "sandbox" || "live",
+     {
+       // default query params for endpoints that use them
+       prefer: "return=representation",
+       total_required: true,
+       page_size: 20,
+     }
+   );
+   ```
+
+2. Create a "Buy Now" link (for Approval)
+
+   ```js
+   // See https://developer.paypal.com/docs/api/orders/v2/#orders_create
+   let order = await PPC.Order.createRequest({
+     application_context: {
+       brand_name: "Bliss via The Root Group, LLC",
+       shipping_preference: "NO_SHIPPING",
+       landing_page: "LOGIN",
+       user_action: "PAY_NOW",
+       return_url: `https://example.com/api/redirects/paypal-checkout/return`,
+       cancel_url: `https://example.com/api/redirects/paypal-checkout/cancel`,
+     },
+     purchase_units: [
+       {
+         request_id: "default",
+         custom_id: "my-local-db-id-for-user-purchasing-product",
+         // shown in PayPal Checkout Flow UI
+         description: "1 year of pure Bliss",
+         // on the charge (credit card) statement
+         soft_descriptor: "Bliss",
+         amount: {
+           currency_code: "USD",
+           value: "10.00",
+         },
+       },
+     ],
+   });
+
+   console.info(
+     "Approve URL:",
+     order.links.find(function (link) {
+       return "approve" === link.rel;
+     }).href
+   );
+   ```
+
+3. Handle the redirect: Verify & Capture
+
+   ```js
+   app.get("/api/redirects/paypal-checkout/return", async function (req, res) {
+     let orderId = req.query.token;
+
+     // verify that the user has paid
+     await PPC.Order.details(orderId)
+       .then(async function (order) {
+         console.info("Deliver the Product to:", order.payer.email_address);
+         if ("APPROVED" !== order.status) {
+           throw new Error("spoofed redirect or cancelled order");
+         }
+
+         // take the money
+         let capture = await PPC.Order.capture(order.id, {
+           final_capture: true,
+         });
+       })
+       .catch(next);
+   });
+   ```
+
+4. Handle the PAYMENT.CAPTURE.COMPLETED WebHook
+
+   ```js
+   app.get("/api/webhooks/paypal-checkout/:secret", async function (req, res) {
+     let crypto = require("crypto");
+     let secret = process.env.PAYPAL_WEBHOOK_SECRET || "";
+     let guess = req.params.secret;
+     if (
+       !secret ||
+       secret.length !== guess.length ||
+       !crypto.timingSafeEqual(Buffer.from(guess), Buffer.from(secret))
+     ) {
+       next(new Error("bad webhook secret value"));
+       return;
+     }
+
+     let event = req.body;
+     switch (event.event_type) {
+       case "PAYMENT.CAPTURE.COMPLETED": {
+         let orderId = event.supplementary_data.related_ids.order_id;
+         let localDbId = event.custom_id;
+         console.info(
+           `Confirm that PayPal Order ${orderId} for ${localDbId} has been paid.`
+         );
+       }
+       default:
+         console.log("Ignoring", event.event_type);
+         res.json({ sucess: true });
+         return;
+     }
+   });
+   ```
+
+## PayPal Checkout Buttons
+
+- <https://www.paypal.com/webapps/mpp/logos-buttons> <== THE ONE YOU WANT
+  - <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-large.png" alt="Check out with PayPal" />
+- <https://developer.paypal.com/docs/checkout/>
+- <https://www.paypal.com/buttons/>
 
 # API
 
-```txt
-PayPal.init(client_id, client_secret, 'sandbox|live', defaults);
+## Overview
+
+```js
+PayPal.init(client_id, client_secret, "sandbox", defaults);
 PayPal.request({ method, url, headers, json });
 ```
 
-### Subscrptions (Recurring Payments)
+## No Dependencies Needed
+
+If you'd like to keep your code super lightweight, you don't even need an SDK -
+you can just use simple HTTP requests:
+
+```js
+let qs = require("querystring");
+let request = require("@root/request");
+let paypalApi = "https://api-m.sandbox.paypal.com";
+
+async function PayPalRequest(
+  endpoint = "/v2/checkout/orders",
+  query = { page_size: 20 },
+  body = { purchase_units: [] },
+  requestId // optional id for certain requests
+) {
+  let search = qs.stringify(query);
+
+  return await request({
+    url: `${paypalApi}${endpoint}?${search}`,
+    auth: {
+      user: process.env.PAYPAL_CLIENT_ID,
+      pass: process.env.PAYPAL_CLIENT_SECRET,
+    },
+    headers: {
+      "PayPal-Request-Id": requestId,
+    },
+    json: body,
+  }).then(function (resp) {
+    if (rsep.status < 200 || resp.status >= 300) {
+      throw new Error("BAD RESPONSE");
+    }
+    return resp.toJSON().body;
+  });
+}
+```
+
+### Subscriptions (Recurring Payments)
+
+See https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions
 
 ```txt
                                               // Webhook 'event_type':
@@ -85,7 +250,7 @@ See also:
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request>
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context>
 
-# Redirects
+### Redirects
 
 - `return_url`
 - `cancel_url`
@@ -128,7 +293,7 @@ Also, PayPal presents the raw `cancel_url` and will NOT update the order or
 subscription status. It's up to you to confirm with the user and change the
 status to `CANCELLED`.
 
-# Webhooks
+### Webhooks
 
 Webhooks can be set up in the Application section of the Dashboard:
 
@@ -185,12 +350,63 @@ Sandbox accounts (for creating fake purchases) can be managed at:
 
 You can auth once and capture multiple times (unless you set `final_capture`).
 
-## PayPal Checkout Buttons
+# Examples
 
-- <https://www.paypal.com/webapps/mpp/logos-buttons> <== THE ONE YOU WANT
-  - <img src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-large.png" alt="Check out with PayPal" />
-- <https://developer.paypal.com/docs/checkout/>
-- <https://www.paypal.com/buttons/>
+### Subscription.createRequest({ ... })
+
+See
+https://developer.paypal.com/docs/subscriptions/integrate/#use-the-subscriptions-api
+
+```js
+await Subscription.createRequest({
+  plan_id: plan.id,
+  //start_time: "2018-11-01T00:00:00Z", (must be in the future)
+  //quantity: "20",
+  //shipping_amount: { currency_code: "USD", value: "10.00" },
+  subscriber: {
+    name: { given_name: "James", surname: "Doe" },
+    email_address: "customer@example.com",
+    /*
+      shipping_address: {
+        name: { full_name: "James Doe" },
+        address: {
+          address_line_1: "123 Sesame Street",
+          address_line_2: "Building 17",
+          admin_area_2: "San Jose",
+          admin_area_1: "CA",
+          postal_code: "95131",
+          country_code: "US",
+        },
+      },
+    */
+  },
+  application_context: {
+    brand_name: "Bliss via The Root Group, LLC",
+    locale: "en-US",
+    shipping_preference: Subscription.shipping_preferences.NO_SHIPPING,
+    user_action: Subscription.actions.SUBSCRIBE_NOW,
+    payment_method: {
+      payer_selected: Subscription.payer_selections.PAYPAL,
+      payee_preferred:
+        Subscription.payee_preferences.IMMEDIATE_PAYMENT_REQUIRED,
+    },
+    return_url:
+      "https://example.com/api/paypal-checkout/return?my_token=abc123",
+    cancel_url:
+      "https://example.com/api/paypal-checkout/cancel?my_token=abc123",
+  },
+});
+console.info("Subscription (Before Approval):");
+console.info(JSON.stringify(subscription, null, 2));
+console.info();
+
+console.info(
+  "Approve URL:",
+  subscription.links.find(function (link) {
+    return "approve" === link.rel;
+  }).href
+);
+```
 
 # Glossary
 
