@@ -19,8 +19,14 @@ PayPal.init = function (client_id, client_secret, env, opts) {
     opts.prefer = "return=representation";
   }
 
-  PayPal.__sandboxUrl = "https://api-m.sandbox.paypal.com";
-  PayPal.__baseUrl = PayPal.__sandboxUrl;
+  PayPal.__sandboxApiBaseUrl = "https://api-m.sandbox.paypal.com";
+  PayPal.__liveApiBaseUrl = "https://api.paypal.com";
+  if ("live" === env) {
+    PayPal.__baseUrl = PayPal.__liveApiBaseUrl;
+  } else {
+    PayPal.__baseUrl = PayPal.__sandboxUrl;
+    console.debug("[PayPal Checkout] ENVIRONMENT=sandbox");
+  }
   PayPal.__id = client_id;
   PayPal.__secret = client_secret;
   PayPal.__defaultQuery = {
