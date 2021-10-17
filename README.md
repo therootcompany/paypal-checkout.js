@@ -69,19 +69,22 @@ here's the gist of what you need to do:
 
    ```js
    // See https://developer.paypal.com/docs/api/orders/v2/#orders_create
+   let myApiUrl = "https://example.com";
+   let myOrderId = "local-db-id-for-user-purchasing-product";
    let order = await PPC.Order.createRequest({
      application_context: {
+       // What to show on PayPal's Pay Now page
        brand_name: "Bliss via The Root Group, LLC",
        shipping_preference: "NO_SHIPPING",
        landing_page: "LOGIN",
        user_action: "PAY_NOW",
-       return_url: `https://example.com/api/redirects/paypal-checkout/return`,
-       cancel_url: `https://example.com/api/redirects/paypal-checkout/cancel`,
+       return_url: `${myApiUrl}/api/redirects/paypal-checkout/return`,
+       cancel_url: `${myApiUrl}/api/redirects/paypal-checkout/cancel`,
      },
      purchase_units: [
        {
          request_id: "default",
-         custom_id: "my-local-db-id-for-user-purchasing-product",
+         custom_id: myOrderId,
          // shown in PayPal Checkout Flow UI
          description: "1 year of pure Bliss",
          // on the charge (credit card) statement
@@ -128,6 +131,7 @@ here's the gist of what you need to do:
 4. Handle the PAYMENT.CAPTURE.COMPLETED WebHook
 
    ```js
+   // Set webhook at https://developer.paypal.com/developer/applications
    app.get("/api/webhooks/paypal-checkout/:secret", async function (req, res) {
      let crypto = require("crypto");
      let secret = process.env.PAYPAL_WEBHOOK_SECRET || "";
@@ -165,9 +169,9 @@ here's the gist of what you need to do:
 - <https://developer.paypal.com/docs/checkout/>
 - <https://www.paypal.com/buttons/>
 
-# API
+# API Overview
 
-## Overview
+## Init
 
 ```js
 PayPal.init(client_id, client_secret, "sandbox", defaults);
@@ -211,7 +215,7 @@ async function PayPalRequest(
 }
 ```
 
-### Subscriptions (Recurring Payments)
+## Subscriptions (Recurring Payments)
 
 See https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions
 
@@ -235,7 +239,7 @@ PayPal.Subscription.details(id);
 PayPal.Subscription.cancel(id, { reason });
 ```
 
-### Orders (One-Time Payments)
+## Orders (One-Time Payments)
 
 ```txt
                                                 // Webhook 'event_type':
@@ -250,12 +254,12 @@ See also:
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request>
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context>
 
-### Redirects
+## Redirects
 
 - `return_url`
 - `cancel_url`
 
-#### `return_url`
+### `return_url`
 
 **_Order_** and **_Subscription_** requests have a return `return_url` will be
 called with some or all of the following params:
@@ -285,7 +289,7 @@ https://example.com/redirects/paypal-checkout/return
 - `token` refers to the **_Order ID_** (perhaps created as part of the setup fee
   or first billing cycle payment).
 
-#### `cancel_url`
+### `cancel_url`
 
 The `cancel_url` will have the same query params as the `return_url`.
 
@@ -293,7 +297,7 @@ Also, PayPal presents the raw `cancel_url` and will NOT update the order or
 subscription status. It's up to you to confirm with the user and change the
 status to `CANCELLED`.
 
-### Webhooks
+## Webhooks
 
 Webhooks can be set up in the Application section of the Dashboard:
 
