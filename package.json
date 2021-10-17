@@ -13,8 +13,8 @@
     "url": "git+https://github.com/therootcompany/paypal-checkout.js.git"
   },
   "keywords": ["paypal", "checkout", "sdk", "rest", "api", "subscriptions"],
-  "author": "AJ ONeal <coolaj86@gmail.com> (https://coolaj86.com/)",
-  "license": "MPL-2.0",
+  "author": "AJ ONeal <aj@therootcompany.com> (https://therootcompany.com/)",
+  "license": "SEE LICENSE IN LICENSE",
   "bugs": {
     "url": "https://github.com/therootcompany/paypal-checkout.js/issues"
   },
