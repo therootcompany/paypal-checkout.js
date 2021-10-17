@@ -120,11 +120,22 @@ function enumify(obj) {
 }
 */
 
+let shipping_preferences = {
+  GET_FROM_FILE: "GET_FROM_FILE", // provided, or selectable from PayPal addresses
+  SET_PROVIDED_ADDRESS: "SET_PROVIDED_ADDRESS", // user can't change it here
+  NO_SHIPPING: "NO_SHIPPING", // duh
+};
+
 let Order = {};
 Order.intents = {
   CAPTURE: "CAPTURE",
   AUTHORIZE: "AUTHORIZE",
 };
+Order.user_actions = {
+  CONTINUE: "CONTINUE",
+  PAY_NOW: "PAY_NOW",
+};
+Order.shipping_preferences = shipping_preferences;
 // See
 // https://developer.paypal.com/docs/api/orders/v2/#orders_create
 // https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request
@@ -195,16 +206,22 @@ Product.__typeNames = Object.keys(Product.types);
 
 // Documented under "categories" at
 // https://developer.paypal.com/docs/api/catalog-products/v1/
-Product.categories = require("./lib/categories.json");
+
+// Optionally load the full list
+// (for those that want the type linting)
+try {
+  // the full list
+  Product.categories = require("@root/paypal-checkout-product-categories");
+} catch {
+  // the short list
+  Product.categories = {
+    SOFTWARE: "SOFTWARE",
+    PHYSICAL_GOOD: "PHYSICAL_GOOD",
+    DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC: "DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC",
+    DIGITAL_GAMES: "DIGITAL_GAMES",
+  };
+}
 Product.__categoryNames = Object.keys(Product.categories);
-/*
-Product.categories = {
-  SOFTWARE: "SOFTWARE",
-  PHYSICAL_GOOD: "PHYSICAL_GOOD",
-  DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC: "DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC",
-  DIGITAL_GAMES: "DIGITAL_GAMES",
-};
-*/
 
 Product.create = async function _createProduct({
   request_id,
@@ -299,6 +316,7 @@ Plan.intervals = {
   MONTH: "MONTH",
   YEAR: "YEAR",
 };
+
 Plan.tenures = {
   TRIAL: "TRIAL",
   REGULAR: "REGULAR",
@@ -414,11 +432,7 @@ Subscription.actions = {
   CONTINUE: "CONTINUE",
   SUBSCRIBE_NOW: "SUBSCRIBE_NOW",
 };
-Subscription.shipping_preferences = {
-  GET_FROM_FILE: "GET_FROM_FILE", // provided, or selectable from PayPal addresses
-  SET_PROVIDED_ADDRESS: "SET_PROVIDED_ADDRESS", // user can't change it here
-  NO_SHIPPING: "NO_SHIPPING", // duh
-};
+Subscription.shipping_preferences = shipping_preferences;
 Subscription.payer_selections = {
   PAYPAL: "PAYPAL",
 };

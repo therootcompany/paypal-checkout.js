@@ -25,6 +25,7 @@ The Good Documentation™ for the PayPal API (a.k.a. PayPal Checkout SDK) is the
   - PayPal Checkout Buttons
 - REST API Overview
   - Orders & Subscriptions
+  - Enums
   - Redirects
   - Webhooks
 - Security & Notes
@@ -34,6 +35,12 @@ The Good Documentation™ for the PayPal API (a.k.a. PayPal Checkout SDK) is the
 
 ```bash
 npm install --save @root/paypal-checkout
+```
+
+Optional, for Type Linting and Auto-Complete
+
+```bash
+npm install --save @root/paypal-checkout-product-categories
 ```
 
 # Quick Start
@@ -77,7 +84,7 @@ here's the gist of what you need to do:
        brand_name: "Bliss via The Root Group, LLC",
        shipping_preference: "NO_SHIPPING",
        landing_page: "LOGIN",
-       user_action: "PAY_NOW",
+       user_action: PPC.Order.user_actions.PAY_NOW,
        return_url: `${myApiUrl}/api/redirects/paypal-checkout/return`,
        cancel_url: `${myApiUrl}/api/redirects/paypal-checkout/cancel`,
      },
@@ -253,6 +260,47 @@ See also:
 - <https://developer.paypal.com/docs/api/orders/v2/#orders_create>
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request>
 - <https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context>
+
+## Enums (optional)
+
+For assistance with Type Linting and Auto-Complete, all of the PayPal Checkout
+enums (ALL CAPS strings that have a limit set of allow values such as `PAY_NOW`
+and `CONTINUE`) are available in code.
+
+They are defined like this:
+
+```js
+Order.user_actions = {
+  CONTINUE: "CONTINUE",
+  PAY_NOW: "PAY_NOW",
+};
+```
+
+You can inspect them simply like this:
+
+```js
+console.log(Order.user_actions);
+```
+
+Here's the full list:
+
+```js
+PayPal.Order.intents;
+PayPal.Order.user_actions;
+PayPal.Order.shipping_preferences;
+PayPal.Plan.intervals;
+PayPal.Plan.tenures;
+PayPal.Product.categories; // See note below
+PayPal.Product.types;
+PayPal.Subscription.actions;
+PayPal.Subscription.payee_preferences;
+PayPal.Subscription.payer_selections;
+PayPal.Subscription.shipping_preferences;
+```
+
+The one exception is `PayPal.Product.categories` which provides only a limited
+set of generic values for simple products and services if
+`@root/paypal-checkout-product-categories` is not installed.
 
 ## Redirects
 

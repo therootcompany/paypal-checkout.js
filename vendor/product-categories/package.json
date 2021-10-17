@@ -1,0 +1,23 @@
+{
+  "name": "@root/paypal-checkout-product-categories",
+  "version": "1.0.0",
+  "description": "Full list of product categories for Type Linting and Auto-Complete with @root/paypal-checkout",
+  "main": "index.js",
+  "files": ["categories.js"],
+  "scripts": {
+    "prepare": "node build.js",
+    "build": "node build.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/therootcompany/paypal-checkout.js.git"
+  },
+  "keywords": ["PayPal", "Checkout", "Product", "Categories", "API", "SDK"],
+  "author": "AJ ONeal <aj@therootcompany.com> (https://therootcompany.com/)",
+  "license": "(CC0-1.0 OR MIT)",
+  "bugs": {
+    "url": "https://github.com/therootcompany/paypal-checkout.js/issues"
+  },
+  "homepage": "https://github.com/therootcompany/paypal-checkout.js#readme"
+}
