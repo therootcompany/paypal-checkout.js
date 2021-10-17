@@ -24,7 +24,7 @@ PayPal.init = function (client_id, client_secret, env, opts) {
   if ("live" === env) {
     PayPal.__baseUrl = PayPal.__liveApiBaseUrl;
   } else {
-    PayPal.__baseUrl = PayPal.__sandboxUrl;
+    PayPal.__baseUrl = PayPal.__sandboxApiBaseUrl;
     console.debug("[PayPal Checkout] ENVIRONMENT=sandbox");
   }
   PayPal.__id = client_id;
