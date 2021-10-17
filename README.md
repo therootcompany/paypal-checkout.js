@@ -46,7 +46,11 @@ PPC.Subscriptions.createRequest({
 ```txt
 PayPal.init(client_id, client_secret, 'sandbox|live', defaults);
 PayPal.request({ method, url, headers, json });
+```
 
+### Subscrptions (Recurring Payments)
+
+```txt
                                               // Webhook 'event_type':
 
 PayPal.Product.create({ ... });               // CATALOG.PRODUCT.CREATED
@@ -66,10 +70,46 @@ PayPal.Subscription.details(id);
 PayPal.Subscription.cancel(id, { reason });
 ```
 
+### Orders (One-Time Payments)
+
+```txt
+PayPal.Order.createRequest({ ... });          // ??
+```
+
+See also:
+
+- <https://developer.paypal.com/docs/api/orders/v2/#orders_create>
+- <https://developer.paypal.com/docs/api/orders/v2/#definition-purchase_unit_request>
+- <https://developer.paypal.com/docs/api/orders/v2/#definition-order_application_context>
+
 # Redirects
 
 - `return_url`
 - `cancel_url`
+
+### Orders
+
+#### `return_url`
+
+Order Request `return_url` will be called with the `token` query param as the
+`order_id`:
+
+```txt
+https://example.com/redirects/paypal-checkout/return
+  ?token=XXXXXXXXXXXXXXXXX
+  &PayerID=XXXXXXXXXXXXX
+```
+
+Again, `token` is the `order_id`.
+
+#### `cancel_url`
+
+The `cancel_url` will have the same query params as the `return_url`.
+
+Also, PayPal presents the raw `cancel_url` and will NOT update the order status.
+It's up to you to confirm with the user and change the status to `CANCELLED`.
+
+### Subscriptions
 
 #### `return_url`
 
