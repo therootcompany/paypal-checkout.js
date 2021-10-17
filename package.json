@@ -1,6 +1,6 @@
 {
   "name": "@root/paypal-checkout",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A more sensible, human-generated wrapper for the PayPal Checkout REST API",
   "main": "paypal-checkout.js",
   "files": [
