@@ -135,10 +135,13 @@ here's the gist of what you need to do:
    });
    ```
 
-4. Handle the PAYMENT.CAPTURE.COMPLETED WebHook
+4. [Set](https://developer.paypal.com/developer/applications) and Handle the
+   [`PAYMENT.CAPTURE.COMPLETED`, `PAYMENT.CAPTURE.REVERSED`, and `CUSTOMER.DISPUTE.CREATED`](https://developer.paypal.com/docs/api-basics/notifications/webhooks/event-names/)
+   WebHooks
 
    ```js
    // Set webhook at https://developer.paypal.com/developer/applications
+   // Descriptions at https://developer.paypal.com/docs/api-basics/notifications/webhooks/event-names/
    app.get("/api/webhooks/paypal-checkout/:secret", async function (req, res) {
      let crypto = require("crypto");
      let secret = process.env.PAYPAL_WEBHOOK_SECRET || "";
@@ -154,13 +157,30 @@ here's the gist of what you need to do:
 
      let event = req.body;
      switch (event.event_type) {
-       case "PAYMENT.CAPTURE.COMPLETED": {
-         let orderId = event.supplementary_data.related_ids.order_id;
-         let localDbId = event.custom_id;
-         console.info(
-           `Confirm that PayPal Order ${orderId} for ${localDbId} has been paid.`
-         );
-       }
+       case "PAYMENT.CAPTURE.COMPLETED":
+         {
+           let orderId = event.supplementary_data.related_ids.order_id;
+           let localDbId = event.custom_id;
+           console.info(
+             `Confirm that PayPal Order ${orderId} for ${localDbId} has been paid.`
+           );
+         }
+         break;
+       case "PAYMENT.CAPTURE.REVERSED":
+         {
+           // deduct from user's account
+         }
+         break;
+       case "CUSTOMER.DISPUTE.CREATED":
+         {
+           // TODO send email to merchant (myself) to check out the dispute
+         }
+         break;
+       case "CUSTOMER.DISPUTE.CREATED":
+         {
+           // TODO send email to merchant (myself) to review the dispute status
+         }
+         break;
        default:
          console.log("Ignoring", event.event_type);
          res.json({ sucess: true });
