@@ -441,6 +441,7 @@ Subscription.payee_preferences = {
   IMMEDIATE_PAYMENT_REQUIRED: "IMMEDIATE_PAYMENT_REQUIRED",
 };
 
+// See https://developer.paypal.com/docs/api/subscriptions/v1/#subscriptions_create
 Subscription.createRequest = async function _createSubscription({
   request_id,
   plan_id,
@@ -449,6 +450,8 @@ Subscription.createRequest = async function _createSubscription({
   shipping_amount,
   subscriber,
   application_context,
+  custom_id,
+  plan,
 }) {
   return await PayPal.request({
     method: "POST",
@@ -496,6 +499,8 @@ Subscription.createRequest = async function _createSubscription({
 				}
       */
       application_context: application_context,
+      custom_id: custom_id,
+      plan: plan,
     },
   })
     .then(must201or200)
